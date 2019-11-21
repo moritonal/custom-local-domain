@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import * as express from "express"
 import * as HttpProxy from "http-proxy"
 import * as fs from "fs"
@@ -117,7 +119,7 @@ class ProxyShell {
     }
 
     async addToHosts(domain : string) {
-        
+
         await new Promise((res, rej) => hostile.set("127.0.0.1", domain, (err? : string) => {
             if (err)
                 rej();
