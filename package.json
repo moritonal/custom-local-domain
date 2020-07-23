@@ -29,6 +29,7 @@
   },
   "devDependencies": {
     "trash-cli": "^3.0.0",
+    "nodemon": "^2.0.4",
     "@types/express": "^4.17.7",
     "@types/http-proxy": "^1.17.4",
     "ts-node-dev": "^1.0.0-pre.52",
