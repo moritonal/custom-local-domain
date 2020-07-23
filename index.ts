@@ -179,6 +179,11 @@ async function main() {
         let key = process.argv[3];
         let value = process.argv[4];
         
+        if (!value.startsWith("http:") && !value.startsWith("https:")) {
+            logger.warn("No protocol detected, assuming http://");
+            value = `http://${value}`;
+        }
+
         logger.info(`Adding ${key} = ${value}`);
 
         data[key] = value;
