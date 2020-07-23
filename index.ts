@@ -26,27 +26,28 @@ const logger = winston.createLogger({
 
 class ProxyShell {
 
-    config : object = null;
-    apiProxy : HttpProxy;
-    server : Server
+    config: object = null;
+    apiProxy: HttpProxy;
+    server: Server
 
     constructor(config) {
 
         this.config = config;
     }
 
-    async handleApi(req : express.Request, res : express.Response) {
-        
+    async handleApi(req: express.Request, res: express.Response) {
+
         logger.warn("Direct calls to the proxy are not currently supported, in future an API will be available");
         res.status(404).send("Direct calls are not supported").end();
     }
 
-    handleProxy(req : express.Request, res : express.Response) {
+    handleProxy(req: express.Request, res: express.Response) {
 
-        let host = req.header("host");        
+        let host = req.header("host");
         let target = this.config[host];
 
         if (target != null && target != "") {
+
             logger.info(`Request to "${host}", proxied to "${target}"`);
 
             try {
@@ -65,9 +66,9 @@ class ProxyShell {
             res.status(503).send("PROXY: Service not configured").end();
         }
     }
-    
+
     async Start() {
-        
+
         const port = 80;
 
         // Get the domains
@@ -85,20 +86,20 @@ class ProxyShell {
         if (Object.keys(this.config).length == 0) {
             logger.warn("No proxied addresses listed!");
         }
-        
+
         // Setup the reverse-proxy
         const app: express.Application = express();
         this.apiProxy = HttpProxy.createProxyServer();
 
         app.all("*", (req, res) => {
 
-            let host = req.header("host");        
+            let host = req.header("host");
             let target = this.config[host];
 
             if (host !== "127.0.0.1") {
 
                 this.handleProxy(req, res);
-            } 
+            }
             else {
                 this.handleApi(req, res);
             }
@@ -109,25 +110,25 @@ class ProxyShell {
         });
     }
 
-    async removeFromHosts(domain : string) {
+    async removeFromHosts(domain: string) {
 
-        await new Promise((res, rej) => hostile.remove("127.0.0.1", domain, (err? : string) => {
+        await new Promise((res, rej) => hostile.remove("127.0.0.1", domain, (err?: string) => {
             if (err)
                 rej();
             res();
         }));
     }
 
-    async addToHosts(domain : string) {
+    async addToHosts(domain: string) {
 
-        await new Promise((res, rej) => hostile.set("127.0.0.1", domain, (err? : string) => {
+        await new Promise((res, rej) => hostile.set("127.0.0.1", domain, (err?: string) => {
             if (err)
                 rej();
             res();
         }));
     }
 
-    async Stop() : Promise<any> {
+    async Stop(): Promise<any> {
 
         logger.info("Closing server");
 
@@ -137,7 +138,7 @@ class ProxyShell {
             this.apiProxy.close();
 
         for (let domain of Object.keys(this.config)) {
-    
+
             logger.info(`Removing "${domain}" from /etc/hosts`);
             await this.removeFromHosts(domain);
         }
@@ -146,7 +147,7 @@ class ProxyShell {
 
 async function readConfig() {
 
-    return await new Promise(async (res, rej) => { 
+    return await new Promise(async (res, rej) => {
 
         let doesConfigExists = await new Promise(resB => fs.exists(configPath, exists => {
             resB(exists);
@@ -156,7 +157,7 @@ async function readConfig() {
             res({});
             return;
         }
-    
+
         fs.readFile(configPath, (err, buff) => {
 
             try {
@@ -175,10 +176,10 @@ async function main() {
     if (process.argv[2] == "add") {
 
         let data = await readConfig();
-        
+
         let key = process.argv[3];
         let value = process.argv[4];
-        
+
         if (!value.startsWith("http:") && !value.startsWith("https:")) {
             logger.warn("No protocol detected, assuming http://");
             value = `http://${value}`;
@@ -188,37 +189,35 @@ async function main() {
 
         data[key] = value;
 
-        await new Promise(res => 
+        await new Promise(res =>
             fs.writeFile(configPath, JSON.stringify(data), {}, err => res()));
 
         process.exit();
-    }    
-    
+    }
+
     if (process.argv[2] == "clear") {
 
         logger.info(`Clearing config`);
 
-        await new Promise(res => 
+        await new Promise(res =>
             fs.writeFile(configPath, "{}", {}, () => res()));
 
         process.exit();
     }
 
     if (!(await isElevated())) {
-        
+
         logger.error("local-proxy needs to be run as Admin to edit the /etc/hosts file");
         process.exit(0);
     }
-    
-    let proxyShell : ProxyShell = null;
 
-    try
-    {
+    let proxyShell: ProxyShell = null;
+
+    try {
         proxyShell = new ProxyShell(await readConfig());
         await proxyShell.Start();
     }
-    catch (ex) 
-    {
+    catch (ex) {
         winston.error(ex);
         process.exit();
     }
@@ -233,19 +232,17 @@ async function main() {
 
         logger.info(`Started reloading config`);
 
-        try
-        {
+        try {
             proxyShell = new ProxyShell(await readConfig());
             await proxyShell.Start();
         }
-        catch (ex) 
-        {
+        catch (ex) {
             logger.error(`ProxyShell starting failed: ${ex}`);
         }
 
         logger.info(`Finished reloading config`);
     }
-    
+
     fs.watchFile(configPath, debounce(reloadConfig));
 
     // When closed, clean-up the host file
