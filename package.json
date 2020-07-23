@@ -1,6 +1,6 @@
 {
   "name": "custom-local-domain",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Edits the /etc/hosts file on a machine to redirect local domains to a proxy which forwards to specific ports",
   "main": "./dist/index.js",
   "scripts": {
