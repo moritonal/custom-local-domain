@@ -2,11 +2,16 @@
 
 Proxy that lets you create custom domains locally that are proxied to a specific target.
 
+
+## Warning
+
+Some domains (such as `.dev`) are now forcing HTTPS. I would recommend using `.local`.
+
 ## Usage
 ```
 npm install -g custom-local-domain
 
-custom-local-domain start home.dev 127.0.0.1:8080
+custom-local-domain start
 ```
 
 ##### Add a local port
